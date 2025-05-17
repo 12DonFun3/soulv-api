@@ -23,7 +23,6 @@ app.get('/tables', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-});
 
 // 取得某表資料
 app.get('/table/:name', async (req, res) => {
