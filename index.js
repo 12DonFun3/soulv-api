@@ -99,6 +99,19 @@ app.get("/user_roles", async (req, res) => {
   }
 });
 
+// GET a single user role by id
+app.get("/user_roles/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await pool.query("SELECT * FROM user_roles WHERE id = $1", [id]);
+    if (result.rowCount === 0) return res.status(404).send("Not found");
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("GET /user_roles/:id error:", err);
+    res.status(500).send("Database error");
+  }
+});
+
 // POST new user role
 app.post("/user_roles", async (req, res) => {
   const { line_id, role } = req.body;
