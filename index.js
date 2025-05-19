@@ -21,63 +21,132 @@ app.get("/", (req, res) => {
   res.send("SoulV API is running!");
 });
 
-// ✅ 1. 查詢所有 feedbacks
-app.get("/feedbacks", async (req, res) => {
+//// ==========================
+// ✅ survey_questions CRUD
+//// ==========================
+
+// GET all survey questions
+app.get("/survey_questions", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM feedbacks ORDER BY id DESC");
+    const result = await pool.query("SELECT * FROM survey_questions ORDER BY survey_code, question_order");
     res.json(result.rows);
   } catch (err) {
-    console.error("GET /feedbacks error:", err);
+    console.error("GET /survey_questions error:", err);
     res.status(500).send("Database error");
   }
 });
 
-// ✅ 2. 新增一筆 feedback
-app.post("/feedbacks", async (req, res) => {
-  const { user_id, title, feedback, ispublic } = req.body;
+// POST a new survey question
+app.post("/survey_questions", async (req, res) => {
+  const { survey_code, question_order, question_text } = req.body;
   try {
     const result = await pool.query(
-      "INSERT INTO feedbacks (user_id, title, feedback, ispublic) VALUES ($1, $2, $3, $4) RETURNING *",
-      [user_id, title, feedback, ispublic]
+      "INSERT INTO survey_questions (survey_code, question_order, question_text) VALUES ($1, $2, $3) RETURNING *",
+      [survey_code, question_order, question_text]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error("POST /feedbacks error:", err);
+    console.error("POST /survey_questions error:", err);
     res.status(500).send("Database error");
   }
 });
 
-// ✅ 3. 更新 feedback
-app.put("/feedbacks/:id", async (req, res) => {
-  const id = req.params.id;
-  const { title, feedback, ispublic } = req.body;
+// PUT (update) a survey question
+app.put("/survey_questions/:survey_code/:question_order", async (req, res) => {
+  const { survey_code, question_order } = req.params;
+  const { question_text } = req.body;
   try {
     const result = await pool.query(
-      "UPDATE feedbacks SET title = $1, feedback = $2, ispublic = $3 WHERE id = $4 RETURNING *",
-      [title, feedback, ispublic, id]
+      "UPDATE survey_questions SET question_text = $1 WHERE survey_code = $2 AND question_order = $3 RETURNING *",
+      [question_text, survey_code, question_order]
     );
     if (result.rowCount === 0) return res.status(404).send("Not found");
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("PUT /feedbacks error:", err);
+    console.error("PUT /survey_questions error:", err);
     res.status(500).send("Database error");
   }
 });
 
-// ✅ 4. 刪除 feedback
-app.delete("/feedbacks/:id", async (req, res) => {
-  const id = req.params.id;
+// DELETE a survey question
+app.delete("/survey_questions/:survey_code/:question_order", async (req, res) => {
+  const { survey_code, question_order } = req.params;
   try {
-    const result = await pool.query("DELETE FROM feedbacks WHERE id = $1", [id]);
+    const result = await pool.query(
+      "DELETE FROM survey_questions WHERE survey_code = $1 AND question_order = $2",
+      [survey_code, question_order]
+    );
     if (result.rowCount === 0) return res.status(404).send("Not found");
     res.send("Deleted successfully");
   } catch (err) {
-    console.error("DELETE /feedbacks error:", err);
+    console.error("DELETE /survey_questions error:", err);
     res.status(500).send("Database error");
   }
 });
 
-// 啟動伺服器
+//// ==========================
+// ✅ user_roles CRUD
+//// ==========================
+
+// GET all user roles
+app.get("/user_roles", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM user_roles ORDER BY created_at DESC");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("GET /user_roles error:", err);
+    res.status(500).send("Database error");
+  }
+});
+
+// POST new user role
+app.post("/user_roles", async (req, res) => {
+  const { line_id, role } = req.body;
+  try {
+    const result = await pool.query(
+      "INSERT INTO user_roles (line_id, role, created_at) VALUES ($1, $2, NOW()) RETURNING *",
+      [line_id, role]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("POST /user_roles error:", err);
+    res.status(500).send("Database error");
+  }
+});
+
+// PUT update role for a user
+app.put("/user_roles/:id", async (req, res) => {
+  const id = req.params.id;
+  const { role } = req.body;
+  try {
+    const result = await pool.query(
+      "UPDATE user_roles SET role = $1 WHERE id = $2 RETURNING *",
+      [role, id]
+    );
+    if (result.rowCount === 0) return res.status(404).send("Not found");
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("PUT /user_roles error:", err);
+    res.status(500).send("Database error");
+  }
+});
+
+// DELETE a user role
+app.delete("/user_roles/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await pool.query("DELETE FROM user_roles WHERE id = $1", [id]);
+    if (result.rowCount === 0) return res.status(404).send("Not found");
+    res.send("Deleted successfully");
+  } catch (err) {
+    console.error("DELETE /user_roles error:", err);
+    res.status(500).send("Database error");
+  }
+});
+
+//// ==========================
+// ✅ 啟動伺服器
+//// ==========================
 app.listen(port, () => {
   console.log(`✅ Server running on port ${port}`);
 });
