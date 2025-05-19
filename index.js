@@ -139,8 +139,8 @@ app.put("/user_roles/:id", async (req, res) => {
     if (result.rowCount === 0) return res.status(404).send("Not found");
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("PUT /user_roles error:", err);
-    res.status(500).send("Database error");
+    console.error("PUT /user_roles error:", err); // ← log to console
+    res.status(500).json({ error: "Database error", detail: err.message }); // ← 更清楚的錯誤訊息
   }
 });
 
